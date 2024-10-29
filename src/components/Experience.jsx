@@ -1,4 +1,4 @@
-import { Float, PerspectiveCamera, useScroll } from '@react-three/drei';
+import { Float, PerspectiveCamera, useScroll, Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -7,6 +7,7 @@ import { Background } from './Background';
 import { Cloud } from './Cloud';
 
 const LINE_NB_POINTS = 12000;
+const CURVE_DISTANCE = 250;
 
 export const Experience = () => {
   const curve = useMemo(() => {
@@ -118,6 +119,46 @@ export const Experience = () => {
           />
           <meshStandardMaterial color={'white'} opacity={0.7} transparent />
         </mesh>
+      </group>
+
+      {/* TEXT */}
+      <group position={[-3, 0, -100]}>
+        <Text
+          color='white'
+          anchorX={'left'}
+          anchorY='middle'
+          fontSize={0.22}
+          maxWidth={2.5}
+          font={'./fonts/Inter-Regular.ttf'}
+        >
+          Welcome to Airplane!{'\n'}
+          Have a seat and enjoy the ride!
+        </Text>
+      </group>
+
+      <group position={[-10, 1, -200]}>
+        <Text
+          color='white'
+          anchorX={'left'}
+          anchorY='center'
+          fontSize={0.52}
+          maxWidth={2.5}
+          font={'./fonts/DMSerifDisplay-Regular.ttf'}
+        >
+          Services
+        </Text>
+        <Text
+          color='white'
+          anchorX={'left'}
+          anchorY='top'
+          position-y={-0.66}
+          fontSize={0.22}
+          maxWidth={2.5}
+          font={'./fonts/Inter-Regular.ttf'}
+        >
+          Do you want a drink?{'\n'}
+          We have a wide range of beverages!
+        </Text>
       </group>
 
       {/* CLOUDS */}
