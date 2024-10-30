@@ -14,16 +14,13 @@ export const Experience = () => {
     return new THREE.CatmullRomCurve3(
       [
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -10),
-        new THREE.Vector3(-2, 0, -20),
-        new THREE.Vector3(-3, 0, -30),
-        new THREE.Vector3(0, 0, -40),
-        new THREE.Vector3(5, 0, -50),
-        new THREE.Vector3(7, 0, -60),
-        new THREE.Vector3(5, 0, -70),
-        new THREE.Vector3(0, 0, -80),
-        new THREE.Vector3(0, 0, -90),
-        new THREE.Vector3(0, 0, -100),
+        new THREE.Vector3(0, 0, -CURVE_DISTANCE),
+        new THREE.Vector3(100, 0, -2 * CURVE_DISTANCE),
+        new THREE.Vector3(-100, 0, -3 * CURVE_DISTANCE),
+        new THREE.Vector3(100, 0, -4 * CURVE_DISTANCE),
+        new THREE.Vector3(0, 0, -5 * CURVE_DISTANCE),
+        new THREE.Vector3(0, 0, -6 * CURVE_DISTANCE),
+        new THREE.Vector3(0, 0, -7 * CURVE_DISTANCE),
       ],
       false,
       'catmullrom',
@@ -94,7 +91,7 @@ export const Experience = () => {
         <Background />
         <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
         <group ref={airplane}>
-          <Float floatIntensity={2} speed={2}>
+          <Float floatIntensity={1} speed={1.5} rotationIntensity={0}>
             <Airplane
               rotation-y={Math.PI / 2}
               scale={[0.2, 0.2, 0.2]}
@@ -129,7 +126,7 @@ export const Experience = () => {
           anchorY='middle'
           fontSize={0.22}
           maxWidth={2.5}
-          font={'./fonts/Inter-Regular.ttf'}
+          font={'../public/fonts/Inter-Regular.ttf'}
         >
           Welcome to Airplane!{'\n'}
           Have a seat and enjoy the ride!
@@ -143,7 +140,7 @@ export const Experience = () => {
           anchorY='center'
           fontSize={0.52}
           maxWidth={2.5}
-          font={'./fonts/DMSerifDisplay-Regular.ttf'}
+          font={'../public/fonts/DMSerifDisplay-Regular.ttf'}
         >
           Services
         </Text>
@@ -154,7 +151,7 @@ export const Experience = () => {
           position-y={-0.66}
           fontSize={0.22}
           maxWidth={2.5}
-          font={'./fonts/Inter-Regular.ttf'}
+          font={'../public/fonts/Inter-Regular.ttf'}
         >
           Do you want a drink?{'\n'}
           We have a wide range of beverages!
