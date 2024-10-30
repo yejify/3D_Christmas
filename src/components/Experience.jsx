@@ -8,34 +8,82 @@ import {
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Group } from 'three';
+import { Group, Vector3 } from 'three';
 import { Airplane } from './Airplane';
 import { Background } from './Background';
 import { Cloud } from './Cloud';
+import { TextSection } from './TextSection';
 
 const LINE_NB_POINTS = 1000;
 const CURVE_DISTANCE = 250;
 const CURVE_AHEAD_CAMERA = 0.008;
 const CURVE_AHEAD_AIRPLANE = 0.02;
 const AIRPLANE_MAX_ANGLE = 35;
+const FRICTION_DISTANCE = 42;
 
 export const Experience = () => {
+  const curvePoints = useMemo(
+    () => [
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -CURVE_DISTANCE),
+      new THREE.Vector3(100, 0, -2 * CURVE_DISTANCE),
+      new THREE.Vector3(-100, 0, -3 * CURVE_DISTANCE),
+      new THREE.Vector3(100, 0, -4 * CURVE_DISTANCE),
+      new THREE.Vector3(0, 0, -5 * CURVE_DISTANCE),
+      new THREE.Vector3(0, 0, -6 * CURVE_DISTANCE),
+      new THREE.Vector3(0, 0, -7 * CURVE_DISTANCE),
+    ],
+    []
+  );
+
   const curve = useMemo(() => {
-    return new THREE.CatmullRomCurve3(
-      [
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, -CURVE_DISTANCE),
-        new THREE.Vector3(100, 0, -2 * CURVE_DISTANCE),
-        new THREE.Vector3(-100, 0, -3 * CURVE_DISTANCE),
-        new THREE.Vector3(100, 0, -4 * CURVE_DISTANCE),
-        new THREE.Vector3(0, 0, -5 * CURVE_DISTANCE),
-        new THREE.Vector3(0, 0, -6 * CURVE_DISTANCE),
-        new THREE.Vector3(0, 0, -7 * CURVE_DISTANCE),
-      ],
-      false,
-      'catmullrom',
-      0.5
-    );
+    return new THREE.CatmullRomCurve3(curvePoints, false, 'catmullrom', 0.5);
+  }, []);
+
+  const textSections = useMemo(() => {
+    return [
+      {
+        cameraRailDist: -1,
+        position: new Vector3(
+          curvePoints[1].x - 3,
+          curvePoints[1].y,
+          curvePoints[1].z
+        ),
+        subtitle: `Welcome to Airplane,
+Have a seat and enjoy the ride!`,
+      },
+      {
+        cameraRailDist: 1.5,
+        position: new Vector3(
+          curvePoints[2].x + 2,
+          curvePoints[2].y,
+          curvePoints[2].z
+        ),
+        title: 'Services',
+        subtitle: `Do you want a drink?
+We have a wide range of beverages!`,
+      },
+      {
+        cameraRailDist: -1,
+        position: new Vector3(
+          curvePoints[3].x - 3,
+          curvePoints[3].y,
+          curvePoints[3].z
+        ),
+        title: 'Fear of flying?',
+        subtitle: `Our flight attendants will help you have a great journey`,
+      },
+      {
+        cameraRailDist: 1.5,
+        position: new Vector3(
+          curvePoints[4].x + 3.5,
+          curvePoints[4].y,
+          curvePoints[4].z - 12
+        ),
+        title: 'Movies',
+        subtitle: `We provide a large selection of medias, we highly recommend you Porco Rosso during the flight`,
+      },
+    ];
   }, []);
 
   const shape = useMemo(() => {
@@ -47,10 +95,35 @@ export const Experience = () => {
   }, [curve]);
 
   const cameraGroup = useRef();
+  const cameraRail = useRef();
   const scroll = useScroll();
 
   useFrame((_state, delta) => {
     const scrollOffset = Math.max(0, scroll.offset);
+
+    let resetCameraRail = true;
+    // LOOK TO CLOSE TEXT SECTIONS
+    textSections.forEach((textSection) => {
+      const distance = textSection.position.distanceTo(
+        cameraGroup.current.position
+      );
+
+      if (distance < FRICTION_DISTANCE) {
+        friction = Math.max(distance / FRICTION_DISTANCE, 0.1);
+        const targetCameraRailPosition = new Vector3(
+          (1 - distance / FRICTION_DISTANCE) * textSection.cameraRailDist,
+          0,
+          0
+        );
+        cameraRail.current.position.lerp(targetCameraRailPosition, delta);
+        resetCameraRail = false;
+      }
+    });
+    if (resetCameraRail) {
+      const targetCameraRailPosition = new Vector3(0, 0, 0);
+      cameraRail.current.position.lerp(targetCameraRailPosition, delta);
+    }
+
     const curPoint = curve.getPoint(scrollOffset);
 
     // Follow the curve points
@@ -117,13 +190,20 @@ export const Experience = () => {
 
   const airplane = useRef();
 
+  const backgroundColors = useRef({
+    colorA: '#3535cc',
+    colorB: '#abaadd',
+  });
+
   return (
     <>
       <directionalLight position={[0, 3, 1]} intensity={0.1} />
       {/* <OrbitControls /> */}
       <group ref={cameraGroup}>
-        <Background />
-        <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
+        <Background backgroundColors={backgroundColors} />
+        <group ref={cameraRail}>
+          <PerspectiveCamera position={[0, 0, 5]} fov={30} makeDefault />
+        </group>
         <group ref={airplane}>
           <Float floatIntensity={1} speed={1.5} rotationIntensity={0.5}>
             <Airplane
@@ -134,6 +214,11 @@ export const Experience = () => {
           </Float>
         </group>
       </group>
+
+      {/* TEXT */}
+      {textSections.map((textSection, index) => (
+        <TextSection {...textSection} key={index} />
+      ))}
 
       {/* LINE */}
       <group position-y={-2}>
@@ -155,46 +240,6 @@ export const Experience = () => {
             envMapIntensity={2}
           />
         </mesh>
-      </group>
-
-      {/* TEXT */}
-      <group position={[-3, 0, -100]}>
-        <Text
-          color='white'
-          anchorX={'left'}
-          anchorY='middle'
-          fontSize={0.22}
-          maxWidth={2.5}
-          font={'/fonts/Inter-Regular.ttf'}
-        >
-          Welcome to Airplane!{'\n'}
-          Have a seat and enjoy the ride!
-        </Text>
-      </group>
-
-      <group position={[-10, 1, -200]}>
-        <Text
-          color='white'
-          anchorX={'left'}
-          anchorY='center'
-          fontSize={0.52}
-          maxWidth={2.5}
-          font={'/fonts/DMSerifDisplay-Regular.ttf'}
-        >
-          Services
-        </Text>
-        <Text
-          color='white'
-          anchorX={'left'}
-          anchorY='top'
-          position-y={-0.66}
-          fontSize={0.22}
-          maxWidth={2.5}
-          font={'/fonts/Inter-Regular.ttf'}
-        >
-          Do you want a drink?{'\n'}
-          We have a wide range of beverages!
-        </Text>
       </group>
 
       {/* CLOUDS */}
