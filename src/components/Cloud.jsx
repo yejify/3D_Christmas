@@ -1,11 +1,14 @@
 import { useGLTF } from '@react-three/drei';
+import React from 'react';
+import { fadeOnBeforeCompile } from '../utils/fadeMaterial';
 
 export function Cloud({ opacity, ...props }) {
-  const { nodes, materials } = useGLTF('/models/cloud/model.glb');
+  const { nodes, materials } = useGLTF('./models/cloud/model.gltf');
   return (
     <group {...props} dispose={null}>
-      <mesh geometry={nodes.Node.geometry}>
+      <mesh geometry={nodes.Mball001.geometry}>
         <meshStandardMaterial
+          onBeforeCompile={fadeOnBeforeCompile}
           envMapIntensity={2}
           transparent
           opacity={opacity}
@@ -15,4 +18,4 @@ export function Cloud({ opacity, ...props }) {
   );
 }
 
-useGLTF.preload('/models/cloud/model.glb');
+useGLTF.preload('./models/cloud/model.gltf');
