@@ -8,6 +8,7 @@ import {
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { Group } from 'three';
 import { Airplane } from './Airplane';
 import { Background } from './Background';
 import { Cloud } from './Cloud';
@@ -15,6 +16,8 @@ import { Cloud } from './Cloud';
 const LINE_NB_POINTS = 12000;
 const CURVE_DISTANCE = 250;
 const CURVE_AHEAD_CAMERA = 0.008;
+const CURVE_AHEAD_AIRPLANE = 0.02;
+const AIRPLANE_MAX_ANGLE = 35;
 
 export const Experience = () => {
   const curve = useMemo(() => {
@@ -70,6 +73,46 @@ export const Experience = () => {
     cameraGroup.current.lookAt(
       cameraGroup.current.position.clone().add(lookAt)
     );
+
+    // Airplane rotation
+
+    const tangent = curve.getTangent(scrollOffset + CURVE_AHEAD_AIRPLANE);
+
+    const nonLerpLookAt = new Group();
+    nonLerpLookAt.position.copy(curPoint);
+    nonLerpLookAt.lookAt(nonLerpLookAt.position.clone().add(targetLookAt));
+
+    tangent.applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      -nonLerpLookAt.rotation.y
+    );
+
+    let angle = Math.atan2(-tangent.z, tangent.x);
+    angle = -Math.PI / 2 + angle;
+
+    let angleDegrees = (angle * 180) / Math.PI;
+    angleDegrees *= 2.4; // stronger angle
+
+    // LIMIT PLANE ANGLE
+    if (angleDegrees < 0) {
+      angleDegrees = Math.max(angleDegrees, -AIRPLANE_MAX_ANGLE);
+    }
+    if (angleDegrees > 0) {
+      angleDegrees = Math.min(angleDegrees, AIRPLANE_MAX_ANGLE);
+    }
+
+    // SET BACK ANGLE
+    angle = (angleDegrees * Math.PI) / 180;
+
+    const targetAirplaneQuaternion = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(
+        airplane.current.rotation.x,
+        airplane.current.rotation.y,
+        angle
+      )
+    );
+
+    airplane.current.quaternion.slerp(targetAirplaneQuaternion, delta * 2);
   });
 
   const airplane = useRef();
@@ -116,7 +159,7 @@ export const Experience = () => {
           anchorY='middle'
           fontSize={0.22}
           maxWidth={2.5}
-          font={'../public/fonts/Inter-Regular.ttf'}
+          font={'/fonts/Inter-Regular.ttf'}
         >
           Welcome to Airplane!{'\n'}
           Have a seat and enjoy the ride!
@@ -130,7 +173,7 @@ export const Experience = () => {
           anchorY='center'
           fontSize={0.52}
           maxWidth={2.5}
-          font={'../public/fonts/DMSerifDisplay-Regular.ttf'}
+          font={'/fonts/DMSerifDisplay-Regular.ttf'}
         >
           Services
         </Text>
@@ -141,7 +184,7 @@ export const Experience = () => {
           position-y={-0.66}
           fontSize={0.22}
           maxWidth={2.5}
-          font={'../public/fonts/Inter-Regular.ttf'}
+          font={'/fonts/Inter-Regular.ttf'}
         >
           Do you want a drink?{'\n'}
           We have a wide range of beverages!
