@@ -133,6 +133,7 @@ We have a wide range of beverages!`,
     lerpedScrollOffset = Math.max(lerpedScrollOffset, 0);
 
     lastScroll.current = lerpedScrollOffset;
+    tl.current.seek(lerpedScrollOffset * tl.current.duration());
 
     const curPoint = curve.getPoint(lerpedScrollOffset);
 
@@ -199,11 +200,34 @@ We have a wide range of beverages!`,
 
   const airplane = useRef();
 
+  //Gradient animation
   const tl = useRef();
   const backgroundColors = useRef({
     colorA: '#3535cc',
     colorB: '#abaadd',
   });
+
+  useLayoutEffect(() => {
+    tl.current = gsap.timeline();
+
+    tl.current.to(backgroundColors.current, {
+      duration: 1,
+      colorA: '#6f35cc',
+      colorB: '#ffad30',
+    });
+    tl.current.to(backgroundColors.current, {
+      duration: 1,
+      colorA: '#424242',
+      colorB: '#ffcc00',
+    });
+    tl.current.to(backgroundColors.current, {
+      duration: 1,
+      colorA: '#81318b',
+      colorB: '#55ab8f',
+    });
+
+    tl.current.pause();
+  }, []);
 
   return (
     <>
