@@ -256,15 +256,6 @@ We have a wide range of beverages!`,
         ),
         rotation: new Euler(Math.PI / 4, Math.PI / 6, 0),
       },
-      {
-        scale: new Vector3(4, 4, 4),
-        position: new Vector3(
-          curvePoints[7].x,
-          curvePoints[7].y,
-          curvePoints[7].z
-        ),
-        rotation: new Euler(0, 0, 0),
-      },
     ],
     []
   );
@@ -422,11 +413,18 @@ We have a wide range of beverages!`,
       )
     );
     airplane.current.quaternion.slerp(targetAirplaneQuaternion, delta * 2);
+
+    if (
+      cameraGroup.current.position.z <
+      curvePoints[curvePoints.length - 1].z + 100
+    ) {
+      setEnd(true);
+      planeOutTl.current.play();
+    }
   });
 
   const airplane = useRef();
 
-  //Gradient animation
   const tl = useRef();
   const backgroundColors = useRef({
     colorA: '#3535cc',
@@ -497,64 +495,65 @@ We have a wide range of beverages!`,
     }
   }, [play]);
 
-  return (
-    <>
-      <directionalLight position={[0, 3, 1]} intensity={0.1} />
-      {/* <OrbitControls /> */}
-      <group ref={cameraGroup}>
-        <Background backgroundColors={backgroundColors} />
-        <group ref={cameraRail}>
-          <PerspectiveCamera
-            ref={camera}
-            position={[0, 0, 5]}
-            fov={30}
-            makeDefault
-          />
-        </group>
-        <group ref={airplane}>
-          <Float floatIntensity={1} speed={1.5} rotationIntensity={0.5}>
-            <Airplane
-              rotation-y={Math.PI / 2}
-              scale={[0.2, 0.2, 0.2]}
-              position-y={0.1}
+  return useMemo(
+    () => (
+      <>
+        <directionalLight position={[0, 3, 1]} intensity={0.1} />
+        {/* <OrbitControls /> */}
+        <group ref={cameraGroup}>
+          <Background backgroundColors={backgroundColors} />
+          <group ref={cameraRail}>
+            <PerspectiveCamera
+              ref={camera}
+              position={[0, 0, 5]}
+              fov={30}
+              makeDefault
             />
-          </Float>
+          </group>
+          <group ref={airplane}>
+            <Float floatIntensity={1} speed={1.5} rotationIntensity={0.5}>
+              <Airplane
+                rotation-y={Math.PI / 2}
+                scale={[0.2, 0.2, 0.2]}
+                position-y={0.1}
+              />
+            </Float>
+          </group>
         </group>
-      </group>
+        {/* TEXT */}
+        {textSections.map((textSection, index) => (
+          <TextSection {...textSection} key={index} />
+        ))}
 
-      {/* TEXT */}
-      {textSections.map((textSection, index) => (
-        <TextSection {...textSection} key={index} />
-      ))}
+        {/* LINE */}
+        <group position-y={-2}>
+          <mesh>
+            <extrudeGeometry
+              args={[
+                shape,
+                {
+                  steps: LINE_NB_POINTS,
+                  bevelEnabled: false,
+                  extrudePath: curve,
+                },
+              ]}
+            />
+            <meshStandardMaterial
+              color={'white'}
+              ref={lineMaterialRef}
+              transparent
+              envMapIntensity={2}
+              onBeforeCompile={fadeOnBeforeCompile}
+            />
+          </mesh>
+        </group>
 
-      {/* LINE */}
-      <group position-y={-2}>
-        <mesh>
-          <extrudeGeometry
-            args={[
-              shape,
-              {
-                steps: LINE_NB_POINTS,
-                bevelEnabled: false,
-                extrudePath: curve,
-              },
-            ]}
-          />
-          <meshStandardMaterial
-            color={'white'}
-            ref={lineMaterialRef}
-            opacity={1}
-            transparent
-            envMapIntensity={2}
-            onBeforeCompile={fadeOnBeforeCompile}
-          />
-        </mesh>
-      </group>
-
-      {/* CLOUDS */}
-      {clouds.map((cloud, index) => (
-        <Cloud sceneOpacity={sceneOpacity} {...cloud} key={index} />
-      ))}
-    </>
+        {/* CLOUDS */}
+        {clouds.map((cloud, index) => (
+          <Cloud sceneOpacity={sceneOpacity} {...cloud} key={index} />
+        ))}
+      </>
+    ),
+    []
   );
 };
