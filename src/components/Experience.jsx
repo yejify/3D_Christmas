@@ -1,14 +1,10 @@
-import {
-  Float,
-  PerspectiveCamera,
-  useScroll,
-  Text,
-  OrbitControls,
-} from '@react-three/drei';
+import { Float, PerspectiveCamera, useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { gsap } from 'gsap';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Group, Vector3 } from 'three';
+import { Euler, Group, Vector3 } from 'three';
+import { fadeOnBeforeCompile } from '../utils/fadeMaterial';
 import { Airplane } from './Airplane';
 import { Background } from './Background';
 import { Cloud } from './Cloud';
@@ -97,10 +93,12 @@ We have a wide range of beverages!`,
   const cameraGroup = useRef();
   const cameraRail = useRef();
   const scroll = useScroll();
+  const lastScroll = useRef(0);
 
   useFrame((_state, delta) => {
     const scrollOffset = Math.max(0, scroll.offset);
 
+    let friction = 1;
     let resetCameraRail = true;
     // LOOK TO CLOSE TEXT SECTIONS
     textSections.forEach((textSection) => {
@@ -124,7 +122,19 @@ We have a wide range of beverages!`,
       cameraRail.current.position.lerp(targetCameraRailPosition, delta);
     }
 
-    const curPoint = curve.getPoint(scrollOffset);
+    // CALCULATE LERPED SCROLL OFFSET
+    let lerpedScrollOffset = THREE.MathUtils.lerp(
+      lastScroll.current,
+      scrollOffset,
+      delta * friction
+    );
+    // PROTECT BELOW 0 AND ABOVE 1
+    lerpedScrollOffset = Math.min(lerpedScrollOffset, 1);
+    lerpedScrollOffset = Math.max(lerpedScrollOffset, 0);
+
+    lastScroll.current = lerpedScrollOffset;
+
+    const curPoint = curve.getPoint(lerpedScrollOffset);
 
     // Follow the curve points
     cameraGroup.current.position.lerp(curPoint, delta * 24);
@@ -132,7 +142,7 @@ We have a wide range of beverages!`,
     // Make the group look ahead on the curve
 
     const lookAtPoint = curve.getPoint(
-      Math.min(scrollOffset + CURVE_AHEAD_CAMERA, 1)
+      Math.min(lerpedScrollOffset + CURVE_AHEAD_CAMERA, 1)
     );
 
     const currentLookAt = cameraGroup.current.getWorldDirection(
@@ -149,7 +159,7 @@ We have a wide range of beverages!`,
 
     // Airplane rotation
 
-    const tangent = curve.getTangent(scrollOffset + CURVE_AHEAD_AIRPLANE);
+    const tangent = curve.getTangent(lerpedScrollOffset + CURVE_AHEAD_AIRPLANE);
 
     const nonLerpLookAt = new Group();
     nonLerpLookAt.position.copy(curPoint);
@@ -184,12 +194,12 @@ We have a wide range of beverages!`,
         angle
       )
     );
-
     airplane.current.quaternion.slerp(targetAirplaneQuaternion, delta * 2);
   });
 
   const airplane = useRef();
 
+  const tl = useRef();
   const backgroundColors = useRef({
     colorA: '#3535cc',
     colorB: '#abaadd',
@@ -214,7 +224,6 @@ We have a wide range of beverages!`,
           </Float>
         </group>
       </group>
-
       {/* TEXT */}
       {textSections.map((textSection, index) => (
         <TextSection {...textSection} key={index} />
@@ -238,6 +247,7 @@ We have a wide range of beverages!`,
             opacity={1}
             transparent
             envMapIntensity={2}
+            onBeforeCompile={fadeOnBeforeCompile}
           />
         </mesh>
       </group>
